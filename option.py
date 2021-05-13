@@ -29,7 +29,7 @@ parser.add_argument('--num_gpu', type=int, default=1,
 ### dataset setting
 parser.add_argument('--dataset', type=str, default='CUFED',
                     help='Which dataset to train and test')
-parser.add_argument('--dataset_dir', type=str, default='/home/v-fuyang/Data/CUFED/',
+parser.add_argument('--dataset_dir', type=str, default='/mnt/HDD1/home/mtlong/workspace/Data_Storage/Datasets/CUFED/',
                     help='Directory of dataset')
 
 ### dataloader setting
@@ -105,6 +105,10 @@ parser.add_argument('--model_path', type=str, default=None,
                     help='The path of model to evaluation')
 parser.add_argument('--test', type=str2bool, default=False,
                     help='Test mode')
+parser.add_argument('--test_FixedRef', type=str2bool, default=False,
+                    help='Test_FixedRef mode')
+parser.add_argument('--test_AllRef', type=str2bool, default=False,
+                    help='test_AllRef mode')
 parser.add_argument('--lr_path', type=str, default='./test/demo/lr/lr.png',
                     help='The path of input lr image when testing')
 parser.add_argument('--ref_path', type=str, default='./test/demo/ref/ref.png',

@@ -205,3 +205,98 @@ class Trainer():
             self.logger.info('output path: %s' %(save_path))
 
         self.logger.info('Test over.')
+
+
+    def test_FixedRef(self, lr_path, ref_path, save_path):
+
+        ### LR and LR_sr
+        HR = imread(lr_path)
+        h1, w1 = HR.shape[:2]
+        h1, w1 = h1//4*4, w1//4*4
+        HR = HR[:h1, :w1, :]
+        LR = np.array(Image.fromarray(HR).resize((w1//4, h1//4), Image.BICUBIC))
+        LR_sr = np.array(Image.fromarray(LR).resize((w1, h1), Image.BICUBIC))
+        
+        ### Ref and Ref_sr
+        Ref = imread(ref_path)
+        h2, w2 = Ref.shape[:2]
+        h2, w2 = h2//4*4, w2//4*4
+        Ref = Ref[:h2, :w2, :]
+        Ref_sr = np.array(Image.fromarray(Ref).resize((w2//4, h2//4), Image.BICUBIC))
+        Ref_sr = np.array(Image.fromarray(Ref_sr).resize((w2, h2), Image.BICUBIC))
+
+        ### change type
+        HR = HR.astype(np.float32)
+        LR = LR.astype(np.float32)
+        LR_sr = LR_sr.astype(np.float32)
+        Ref = Ref.astype(np.float32)
+        Ref_sr = Ref_sr.astype(np.float32)
+
+        ### rgb range to [-1, 1]
+        HR = HR / 127.5 - 1.
+        LR = LR / 127.5 - 1.
+        LR_sr = LR_sr / 127.5 - 1.
+        Ref = Ref / 127.5 - 1.
+        Ref_sr = Ref_sr / 127.5 - 1.
+
+        ### to tensor
+        HR_t = torch.from_numpy(HR.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        LR_t = torch.from_numpy(LR.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        LR_sr_t = torch.from_numpy(LR_sr.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        Ref_t = torch.from_numpy(Ref.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        Ref_sr_t = torch.from_numpy(Ref_sr.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+
+        self.model.eval()
+        with torch.no_grad():
+            sr, _, _, _, _ = self.model(lr=LR_t, lrsr=LR_sr_t, ref=Ref_t, refsr=Ref_sr_t)
+            sr_save = (sr+1.) * 127.5
+            sr_save = np.transpose(sr_save.squeeze().round().cpu().numpy(), (1, 2, 0)).astype(np.uint8)
+            imsave(save_path, sr_save)
+        psnr, ssim = calc_psnr_and_ssim(sr.detach(), HR_t.detach())
+        return psnr, ssim
+
+
+    def test_woSave(self, lr_path, ref_path):
+
+        ### LR and LR_sr
+        HR = imread(lr_path)
+        h1, w1 = HR.shape[:2]
+        h1, w1 = h1//4*4, w1//4*4
+        HR = HR[:h1, :w1, :]
+        LR = np.array(Image.fromarray(HR).resize((w1//4, h1//4), Image.BICUBIC))
+        LR_sr = np.array(Image.fromarray(LR).resize((w1, h1), Image.BICUBIC))
+        
+        ### Ref and Ref_sr
+        Ref = imread(ref_path)
+        h2, w2 = Ref.shape[:2]
+        h2, w2 = h2//4*4, w2//4*4
+        Ref = Ref[:h2, :w2, :]
+        Ref_sr = np.array(Image.fromarray(Ref).resize((w2//4, h2//4), Image.BICUBIC))
+        Ref_sr = np.array(Image.fromarray(Ref_sr).resize((w2, h2), Image.BICUBIC))
+
+        ### change type
+        HR = HR.astype(np.float32)
+        LR = LR.astype(np.float32)
+        LR_sr = LR_sr.astype(np.float32)
+        Ref = Ref.astype(np.float32)
+        Ref_sr = Ref_sr.astype(np.float32)
+
+        ### rgb range to [-1, 1]
+        HR = HR / 127.5 - 1.
+        LR = LR / 127.5 - 1.
+        LR_sr = LR_sr / 127.5 - 1.
+        Ref = Ref / 127.5 - 1.
+        Ref_sr = Ref_sr / 127.5 - 1.
+
+        ### to tensor
+        HR_t = torch.from_numpy(HR.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        LR_t = torch.from_numpy(LR.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        LR_sr_t = torch.from_numpy(LR_sr.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        Ref_t = torch.from_numpy(Ref.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+        Ref_sr_t = torch.from_numpy(Ref_sr.transpose((2,0,1))).unsqueeze(0).float().to(self.device)
+
+        self.model.eval()
+        with torch.no_grad():
+            sr, _, _, _, _ = self.model(lr=LR_t, lrsr=LR_sr_t, ref=Ref_t, refsr=Ref_sr_t)
+        psnr, ssim = calc_psnr_and_ssim(sr.detach(), HR_t.detach())
+        return psnr, ssim
